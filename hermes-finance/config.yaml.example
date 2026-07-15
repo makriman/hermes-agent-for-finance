@@ -1,0 +1,39 @@
+# Finance-relevant additions to merge into ~/.hermes/config.yaml.
+# These are only the keys this project touches — leave the rest of your
+# hermes-agent config as-is.
+
+# Model: this build used Claude Sonnet via the GitHub Copilot CLI transport.
+model:
+  default: copilot/claude-sonnet-4.6
+  provider: copilot
+
+# Route the whatsapp_cloud platform through the messaging toolset.
+platform_toolsets:
+  whatsapp_cloud:
+    - hermes-whatsapp
+
+# WhatsApp-first UX: final answer only, no streaming/partial edits or tool chatter.
+display:
+  platforms:
+    whatsapp_cloud:
+      streaming: false
+      show_reasoning: false
+
+# Speech-to-text for inbound voice notes.
+#   local  = faster-whisper on-box, no API key (install: pip install faster-whisper)
+#   set GROQ_API_KEY in .env and provider: groq to offload to the cloud instead.
+stt:
+  enabled: true
+  provider: local
+  local:
+    model: base
+
+# Text-to-speech. edge = free, no key; converted to Opus for voice bubbles.
+tts:
+  provider: edge
+  edge:
+    voice: en-US-AriaNeural
+
+# Voice replies only when the user asks for one (never auto-narrate).
+voice:
+  auto_tts: false

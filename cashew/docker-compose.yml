@@ -1,0 +1,18 @@
+services:
+  cashew-mocks:
+    build: .
+    image: cashew-mocks:latest
+    container_name: cashew-mocks
+    environment:
+      CASHEW_ORG: ${CASHEW_ORG:-jam-scn-1}
+      CASHEW_ANCHOR: ${CASHEW_ANCHOR:-2026-06-30}
+      CASHEW_SCENARIO_MONTH: ${CASHEW_SCENARIO_MONTH:-2026-07}
+      CASHEW_SEED: ${CASHEW_SEED:-42}
+      CASHEW_DATA_ROOT: /app/data/ailabgemini
+      CASHEW_STATE_FILE: /app/state/.sim_state.json
+    volumes:
+      - ./data:/app/data:ro          # private test data, read-only
+      - ./state:/app/state           # persisted virtual clock
+    ports:
+      - "8900:8900"
+    restart: unless-stopped

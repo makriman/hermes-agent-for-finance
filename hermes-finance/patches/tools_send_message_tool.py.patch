@@ -1,0 +1,116 @@
+diff --git a/tools/send_message_tool.py b/tools/send_message_tool.py
+index 9ea0b9af4..5f6c7425b 100644
+--- a/tools/send_message_tool.py
++++ b/tools/send_message_tool.py
+@@ -271,6 +271,30 @@ def _handle_send(args):
+                 f"or set a home channel via: hermes config set {platform_name.upper()}_HOME_CHANNEL <channel_id>"
+             })
+ 
++    # Anti-misroute guard (HARD): a live in-chat reply must never escape to a
++    # different platform. If we're mid-conversation on one messaging platform
++    # and the model targets ANOTHER platform — home channel OR an explicit id —
++    # that's it wrongly routing its own reply (the WhatsApp→Telegram double-send
++    # bug; the poisoned session had it firing at Ramu's explicit Telegram id).
++    # Block it: the reply belongs on the current channel, with any file/voice
++    # inline as MEDIA:/path. Non-interactive callers (cron, CLI — session
++    # platform empty/cli/etc.) are unaffected, so scheduled cross-channel
++    # broadcasts keep working.
++    from gateway.session_context import get_session_env as _gse
++    _cur = (_gse("HERMES_SESSION_PLATFORM", "") or "").lower()
++    if _cur not in ("", "cli", "webhook", "api_server", "local") and _cur != platform_name:
++        logger.warning("[send_message] blocked cross-platform reply: session=%s -> target=%s",
++                       _cur, platform_name)
++        return json.dumps({
++            "error": (
++                f"You're in a live {_cur} conversation with this person. Reply to "
++                f"them HERE on {_cur}: put your answer in your normal reply and "
++                f"attach any file or voice note inline as MEDIA:/absolute/path. "
++                f"Do NOT use send_message to answer them, and never route your "
++                f"reply to {platform_name} or any other platform."
++            )
++        })
++
+     duplicate_skip = _maybe_skip_cron_duplicate_send(platform_name, chat_id, thread_id)
+     if duplicate_skip:
+         return json.dumps(duplicate_skip)
+@@ -733,11 +757,17 @@ async def _send_to_platform(platform, pconfig, chat_id, message, thread_id=None,
+             last_result = result
+         return last_result
+ 
++    # --- WhatsApp Cloud: native media attachment support via adapter ---
++    if platform == Platform.WHATSAPP_CLOUD and media_files:
++        return await _send_whatsapp_cloud(
++            chat_id, message, media_files=media_files,
++            force_document=force_document_attachments)
++
+     # --- Non-media platforms ---
+     if media_files and not message.strip():
+         return {
+             "error": (
+-                f"send_message MEDIA delivery is currently only supported for telegram, discord, matrix, weixin, signal, yuanbao and feishu; "
++                f"send_message MEDIA delivery is currently only supported for telegram, discord, matrix, weixin, signal, yuanbao, feishu and whatsapp_cloud; "
+                 f"target {platform.value} had only media attachments"
+             )
+         }
+@@ -745,7 +775,7 @@ async def _send_to_platform(platform, pconfig, chat_id, message, thread_id=None,
+     if media_files:
+         warning = (
+             f"MEDIA attachments were omitted for {platform.value}; "
+-            "native send_message media delivery is currently only supported for telegram, discord, matrix, weixin, signal, yuanbao and feishu"
++            "native send_message media delivery is currently only supported for telegram, discord, matrix, weixin, signal, yuanbao, feishu and whatsapp_cloud"
+         )
+ 
+     last_result = None
+@@ -1771,6 +1801,52 @@ async def _send_yuanbao(chat_id, message, media_files=None):
+         return _error(f"Yuanbao send failed: {e}")
+ 
+ 
++async def _send_whatsapp_cloud(chat_id, message, media_files=None, force_document=False):
++    """Deliver text + native media via the running whatsapp_cloud adapter —
++    images, video, audio/voice notes, and documents (e.g. the Excel export).
++    Mirrors the Yuanbao/Feishu helpers: grab the live adapter from the running
++    gateway and call its send_* methods (which upload to WhatsApp /media)."""
++    try:
++        from gateway.run import _gateway_runner_ref
++        from gateway.config import Platform
++        runner = _gateway_runner_ref()
++    except Exception:
++        runner = None
++    adapter = runner.adapters.get(Platform.WHATSAPP_CLOUD) if runner is not None else None
++    if adapter is None:
++        return _error("WhatsApp Cloud adapter is not running. "
++                      "Start the gateway with whatsapp_cloud enabled first.")
++
++    # WhatsApp accepts these as native audio messages (Telegram's _VOICE_EXTS is
++    # ogg/opus-only; TTS here emits .mp3, so widen to WhatsApp's audio set).
++    _WA_AUDIO = {".ogg", ".opus", ".mp3", ".m4a", ".aac", ".amr"}
++
++    # Text first (adapter.send chunks it), then each attachment natively.
++    if message and message.strip():
++        tr = await adapter.send(chat_id=chat_id, content=message)
++        if not getattr(tr, "success", False):
++            return _error(f"WhatsApp text send failed: {getattr(tr, 'error', 'unknown')}")
++
++    last = None
++    for media_path, is_voice in (media_files or []):
++        if not os.path.exists(media_path):
++            continue
++        ext = os.path.splitext(media_path)[1].lower()
++        if not force_document and ext in _IMAGE_EXTS:
++            last = await adapter.send_image(chat_id, media_path)
++        elif ext in _VIDEO_EXTS:
++            last = await adapter.send_video(chat_id, media_path)
++        elif not force_document and ext in _WA_AUDIO:
++            last = await adapter.send_voice(chat_id, media_path)
++        else:
++            last = await adapter.send_document(chat_id, media_path)
++        if last is not None and not getattr(last, "success", True):
++            return _error(f"WhatsApp media send failed: {getattr(last, 'error', 'unknown')}")
++
++    return {"success": True,
++            "message_id": getattr(last, "message_id", None) if last is not None else None}
++
++
+ # --- Registry ---
+ from tools.registry import registry, tool_error
+ 

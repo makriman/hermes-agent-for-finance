@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Cashew engine entrypoint — runs the engine CLI in its own venv.
+# Usage: ./cashew <forecast|status|reconcile|vat|now|advance|set|reset|orgs> [flags]
+cd "$(dirname "$0")"
+exec .venv/bin/python -m engine.cli "$@"

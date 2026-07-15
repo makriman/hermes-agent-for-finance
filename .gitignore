@@ -1,0 +1,43 @@
+# --- secrets: never commit ---
+.env
+*.env
+!*.env.example
+!env.example
+bridge/.env
+*.key
+*.pem
+*_token*
+credentials*.json
+
+# --- python ---
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- engine / harness state (regenerable) ---
+engine.db
+engine.db*.bak
+state/
+.sim_state.json
+exports/*
+!exports/.gitkeep
+*.log
+
+# --- data: design-partner-derived fixtures are NOT shared ---
+cashew/data/*/
+!cashew/data/README.md
+
+# --- promo render intermediates (keep only the final mp4) ---
+promo/frames/
+promo/*.wav
+promo/tmp/
+
+# --- os / editor ---
+.DS_Store
+.idea/
+.vscode/

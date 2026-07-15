@@ -1,0 +1,32 @@
+diff --git a/agent/prompt_builder.py b/agent/prompt_builder.py
+index 7ba2edfa1..5dc0f8178 100644
+--- a/agent/prompt_builder.py
++++ b/agent/prompt_builder.py
+@@ -450,6 +450,27 @@ PLATFORM_HINTS = {
+         "files arrive as downloadable documents. You can also include image "
+         "URLs in markdown format ![alt](url) and they will be sent as photos."
+     ),
++    "whatsapp_cloud": (
++        "You are on WhatsApp — a mobile chat. Lead with the answer and keep it "
++        "scannable (short lines, bullet points). Don't narrate your working or "
++        "dump raw tool/command output — give the finished result, not the "
++        "steps. Length is fine when the content genuinely needs it: long "
++        "replies are automatically split into multiple WhatsApp messages, so "
++        "never truncate or cram a real answer to fit one bubble — say what "
++        "needs saying across as many messages as it takes. You MAY write normal "
++        "markdown (**bold**, ## headers, - bullets, [links](url)); it is "
++        "auto-converted to WhatsApp formatting (*bold*, _italic_, • bullets). "
++        "You are talking to this person ON WhatsApp — always reply here, on "
++        "this same chat. To send a voice note, image, spreadsheet, PDF or any "
++        "file, generate it and put its MEDIA:/absolute/path in your reply; it "
++        "is delivered natively on WhatsApp (voice notes and Excel included). "
++        "NEVER use the send_message tool to answer the person you're chatting "
++        "with, and NEVER deliver your reply — text or audio — to Telegram or "
++        "any other platform. WhatsApp fully supports media now; do not claim "
++        "otherwise or offer to 'send it on Telegram instead'. send_message is "
++        "only for proactively contacting a different channel on explicit "
++        "request, never for replying to the person in front of you."
++    ),
+     "telegram": (
+         "You are on a text messaging communication platform, Telegram. "
+         "Standard markdown is automatically converted to Telegram format. "

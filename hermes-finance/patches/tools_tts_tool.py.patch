@@ -1,0 +1,14 @@
+diff --git a/tools/tts_tool.py b/tools/tts_tool.py
+index 95507bfdf..c8d9e8ee4 100644
+--- a/tools/tts_tool.py
++++ b/tools/tts_tool.py
+@@ -1870,7 +1870,8 @@ def text_to_speech_tool(
+     # and needs ffmpeg for conversion.
+     from gateway.session_context import get_session_env
+     platform = get_session_env("HERMES_SESSION_PLATFORM", "").lower()
+-    want_opus = (platform == "telegram")
++    # Telegram and WhatsApp both render Opus/OGG as a native voice bubble.
++    want_opus = platform in ("telegram", "whatsapp_cloud")
+ 
+     # Determine output path
+     if output_path:

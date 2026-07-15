@@ -1,0 +1,48 @@
+diff --git a/gateway/run.py b/gateway/run.py
+index 0549d7150..d443b8a41 100644
+--- a/gateway/run.py
++++ b/gateway/run.py
+@@ -6494,6 +6494,14 @@ class GatewayRunner:
+                 return None
+             return MatrixAdapter(config)
+ 
++        elif platform == Platform.WHATSAPP_CLOUD:
++            from gateway.platforms.whatsapp_cloud import (
++                WhatsAppCloudAdapter, check_whatsapp_cloud_requirements)
++            if not check_whatsapp_cloud_requirements():
++                logger.warning("WhatsApp Cloud: aiohttp/httpx not installed")
++                return None
++            return WhatsAppCloudAdapter(config)
++
+         elif platform == Platform.API_SERVER:
+             from gateway.platforms.api_server import APIServerAdapter, check_api_server_requirements
+             if not check_api_server_requirements():
+@@ -6621,6 +6629,7 @@ class GatewayRunner:
+             Platform.TELEGRAM: "TELEGRAM_ALLOWED_USERS",
+             Platform.DISCORD: "DISCORD_ALLOWED_USERS",
+             Platform.WHATSAPP: "WHATSAPP_ALLOWED_USERS",
++            Platform.WHATSAPP_CLOUD: "WHATSAPP_CLOUD_ALLOWED_USERS",
+             Platform.SLACK: "SLACK_ALLOWED_USERS",
+             Platform.SIGNAL: "SIGNAL_ALLOWED_USERS",
+             Platform.EMAIL: "EMAIL_ALLOWED_USERS",
+@@ -6647,6 +6656,7 @@ class GatewayRunner:
+             Platform.TELEGRAM: "TELEGRAM_ALLOW_ALL_USERS",
+             Platform.DISCORD: "DISCORD_ALLOW_ALL_USERS",
+             Platform.WHATSAPP: "WHATSAPP_ALLOW_ALL_USERS",
++            Platform.WHATSAPP_CLOUD: "WHATSAPP_CLOUD_ALLOW_ALL_USERS",
+             Platform.SLACK: "SLACK_ALLOW_ALL_USERS",
+             Platform.SIGNAL: "SIGNAL_ALLOW_ALL_USERS",
+             Platform.EMAIL: "EMAIL_ALLOW_ALL_USERS",
+@@ -8900,8 +8910,10 @@ class GatewayRunner:
+             )
+         
+         # One-time prompt if no home channel is set for this platform
+-        # Skip for webhooks - they deliver directly to configured targets (github_comment, etc.)
+-        if not history and source.platform and source.platform != Platform.LOCAL and source.platform != Platform.WEBHOOK:
++        # Skip for webhooks (deliver directly to configured targets) and for
++        # WhatsApp Cloud (no home-channel concept — the digest is sent directly).
++        if not history and source.platform and source.platform not in (
++                Platform.LOCAL, Platform.WEBHOOK, Platform.WHATSAPP_CLOUD):
+             platform_name = source.platform.value
+             env_key = _home_target_env_var(platform_name)
+             if not os.getenv(env_key):

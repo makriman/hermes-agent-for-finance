@@ -3,20 +3,21 @@
 **A chat-native cashflow-forecasting assistant for small businesses — a deterministic
 finance engine wearing a conversational skin, delivered over WhatsApp and Telegram.**
 
-Built on top of [NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent),
-this project adds two things the base agent doesn't have:
+Built on [NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent), this
+project's original contribution is **Cashew**: a deterministic, auditable cashflow-forecasting
+engine (an editable line-item forecast, VAT/corporation-tax modules, variance reconciliation,
+scenarios, Excel round-trip) where **the language model never touches a number** — plus the
+skill and config that wire it into the Hermes gateway.
 
-1. **Cashew** — a deterministic, auditable cashflow-forecasting engine (an editable
-   line-item forecast, VAT/corporation-tax modules, variance reconciliation, scenarios,
-   Excel round-trip) where **the language model never touches a number**.
-2. **A native WhatsApp Cloud API platform** for the Hermes gateway, at full feature
-   parity with the built-in Telegram adapter — voice notes, images, documents, native
-   file attachments, quoted replies, Opus voice bubbles — plus the skill and glue that
-   turn the agent into a finance assistant.
+> ⚠️ **Prototype.** Built as a design-partner demo with **synthetic data**. Not a production
+> banking system; surfaces general information, not regulated financial advice. See
+> [Security & data](#security--data).
 
-> ⚠️ **Prototype.** This was built as a design-partner demo with **synthetic data**. It is
-> not a production banking system and gives general information, not regulated financial
-> advice. See [Security & data](#security--data).
+> ℹ️ **On WhatsApp:** hermes-agent (≥ v0.18) ships a **native WhatsApp Cloud API platform**
+> and a native Telegram platform out of the box. This project *uses* them — it does not
+> provide them. (An earlier version shipped a custom WhatsApp Cloud adapter; once upstream's
+> landed — a strict superset — ours was retired. It's in git history and
+> [`hermes-finance/`](hermes-finance/) explains the transition.)
 
 ---
 
@@ -27,11 +28,11 @@ opposite:
 
 | Principle | What it means |
 |---|---|
-| **The LLM never computes** | Every figure comes from a deterministic Python engine run as a CLI. The model translates plain English → commands, and relays the output. Same clock in → byte-identical numbers out. |
-| **Editable, not magic** | The forecast is a set of **line items the owner edits by chatting** ("rent is £2k on the 1st", "hiring at £4k/mo from September"). Four methods: fixed, trend, one-off, and linked-%. This is the 80/20 product — a great first pass, then the owner tweaks. |
+| **The LLM never computes** | Every figure comes from a deterministic Python engine run as a CLI. The model translates plain English → commands and relays the output. Same clock in → byte-identical numbers out. |
+| **Editable, not magic** | The forecast is a set of **line items the owner edits by chatting** ("rent is £2k on the 1st", "hiring at £4k/mo from September"). Four methods: fixed, trend, one-off, linked-%. |
 | **Verdict first** | Every view opens with a 🟢 / 🟡 / 🔴 scanned over a 6-month risk horizon, not a wall of numbers. |
-| **Trust through variance** | Frozen baselines + reconciliation against real actuals, with the *cause* of every miss (timing / amount / missing / surprise) and a plain-English lesson. |
-| **As-of everything** | Cash moves as the clock moves. Every output is stamped `🕐 as of <date> · <N> txns`, and the assistant is forbidden from reusing a stale figure. |
+| **Trust through variance** | Frozen baselines + reconciliation against real actuals, with the *cause* of every miss (timing / amount / missing / surprise). |
+| **As-of everything** | Cash moves as the clock moves. Every output is stamped `🕐 as of <date> · <N> txns`; the assistant may not reuse a stale figure. |
 
 ---
 
@@ -42,18 +43,17 @@ opposite:
  (Meta Cloud    │  webhook / long-poll                 │
   API webhook)  ▼                                       ▼
         ┌───────────────────────────────────────────────────┐
-        │           Hermes Agent gateway (warm)              │
+        │        Hermes Agent gateway (warm)  — v0.18        │
         │   Claude Sonnet (via GitHub Copilot, text-only)    │
-        │   • native whatsapp_cloud adapter  • telegram      │
+        │   • NATIVE whatsapp_cloud + telegram platforms     │
         │   • loads the "cashew" skill                       │
         └───────────────────────┬───────────────────────────┘
                                  │  runs the CLI, relays output
                                  ▼
         ┌───────────────────────────────────────────────────┐
-        │        Cashew engine  (deterministic Python)       │
+        │        Cashew engine  (deterministic Python)       │  ← this repo's original work
         │   line-item forecast · VAT/CT · reconcile ·        │
-        │   scenarios · Excel export/import                  │
-        │                   ⇅  engine.db                     │
+        │   scenarios · Excel export/import   ⇅ engine.db    │
         └───────────────────────┬───────────────────────────┘
                                  │  reads bank + ledger
                                  ▼
@@ -63,11 +63,6 @@ opposite:
         │   behind a virtual clock + ground-truth oracle     │
         └───────────────────────────────────────────────────┘
 ```
-
-The engine reads its data through **provider-shaped APIs** (TrueLayer for open banking,
-Xero for accounting). In this repo those are served by a **local mock harness** so you can
-replay time and watch actuals arrive day by day; in production you point the same engine at
-the real TrueLayer + Xero.
 
 ---
 
@@ -81,18 +76,15 @@ hermes-agent-for-finance/
 │   ├── sim/                    #   oracle test runner
 │   ├── tests/                  #   ~150 tests
 │   ├── data/                   #   (dataset excluded — see cashew/data/README.md)
-│   ├── promo/                  #   demo video + render scripts
+│   ├── promo/cashew-promo.mp4
 │   ├── cashew                  #   CLI entrypoint
 │   └── run.sh                  #   start the mock harness on :8900
 │
-├── hermes-finance/             # Our custom layer for the Hermes gateway
-│   ├── platforms/
-│   │   └── whatsapp_cloud.py   #   NEW: native WhatsApp Cloud API adapter (full file)
-│   ├── patches/                #   git-diff patches for 5 modified upstream files
-│   ├── apply.sh                #   drop the adapter in + apply the patches
-│   ├── config.yaml.example     #   the finance-relevant config additions
-│   ├── env.example             #   WhatsApp / Telegram / STT / Langfuse template
-│   └── UPSTREAM_BASE_COMMIT.txt#   the hermes-agent commit the patches apply to
+├── hermes-finance/             # Thin layer that wires Cashew into the gateway
+│   ├── README.md               #   how to set up + the upstream-adapter transition
+│   ├── config.yaml.example     #   finance-relevant config additions
+│   ├── env.example             #   model / native Telegram + WhatsApp Cloud / STT / Langfuse
+│   └── UPSTREAM_BASE_COMMIT.txt #   validated against hermes-agent v0.18.2
 │
 └── skills/
     └── cashew/SKILL.md         # The Hermes skill that drives the engine from chat
@@ -113,68 +105,23 @@ cd cashew
 ./cashew reconcile               # plan vs actuals, with the cause of every miss
 ./cashew item add --name "Payroll — new hire" --category payroll \
                   --method recurring_fixed --amount -4000 --day 28 --start 2026-09-01
-./cashew whatif --scale revenue=0.5      # instant what-if
+./cashew whatif --scale revenue=0.5
 ./cashew export                  # → an .xlsx the accountant can edit and re-import
 ```
 
-Highlights:
-
-- **One compute path** behind every view (`outlook`/`weekly`/`status`/`whatif` can't disagree).
-- **Four forecast methods** with piecewise start/end dates: `recurring_fixed`,
-  `recurring_variable` (trend), `one_off`, `linked` (% of another category).
-- **VAT + corporation-tax modules** — accrual-aware estimates, real UK due dates, that
-  settle themselves when the payment lands.
-- **Reconciliation** matches planned occurrences to actuals and classifies each variance
-  (`on_track` / `timing` / `amount` / `missing` / `surprise`), learning debtor payment
-  timing (DSO) as it goes.
-- **Scenarios & what-ifs** as flavors of the same line items; **Excel round-trip**
-  (export → accountant edits → `import` previews → applies, undoable).
-- **Safe & reversible** — every edit prints its before→after impact + an undo hint; owner
-  edits are locked against auto-sync.
-
-See [`cashew/README.md`](cashew/README.md) for the full command reference and design notes.
+Highlights: one compute path behind every view; four forecast methods with piecewise
+start/end dates; VAT + corporation-tax modules with real UK due dates; reconciliation that
+classifies every variance and learns debtor timing (DSO); scenarios/what-ifs as flavors of
+the same line items; Excel round-trip; every edit prints its before→after impact + an undo
+hint. See [`cashew/README.md`](cashew/README.md) for the full command reference.
 
 ### The mock harness
 
-`cashew/mocks/` serves the synthetic dataset as **two APIs that look like the real ones**:
-
-- **TrueLayer-shaped** open banking (`/openbanking/data/v1/...`, plus `/standing_orders`,
-  `/direct_debits`, `/transactions/pending`) — and it does **not** leak categories, so
-  mapping is a real problem.
-- **Xero-shaped** accounting (`/xero/api.xro/2.0/...`, `/Contacts`) — lagged behind the
-  bank feed by a few days, like reality.
-- A shared **virtual clock** (`/sim`) you can advance to replay time, and a **ground-truth
-  oracle** (`/sim/truth/...`) so tests can assert the engine caught what each scenario planted.
-
----
-
-## The native WhatsApp Cloud adapter
-
-The headline of `hermes-finance/`. `platforms/whatsapp_cloud.py` is a from-scratch Hermes
-gateway platform that speaks the **official Meta WhatsApp Cloud API** and dispatches inbound
-messages straight into the *same warm-agent path Telegram uses* (cached agent, hot prompt
-cache, persistent session). That single decision is what makes it fast — an external bridge
-or a rebuilt-per-request server runs ~2× slower.
-
-What it does, at Telegram parity:
-
-- **Inbound**: text, **voice notes** (downloaded + transcribed via the gateway's STT path),
-  images & stickers, **documents** (PDF/Excel/CSV/Word — extracted and, for Excel, routable
-  straight into `cashew import`), video, location, contacts, reactions — each cached so the
-  gateway's existing vision/STT/doc-extraction paths pick it up. The webhook returns `200`
-  immediately and downloads in the background (no Meta retries).
-- **Outbound**: native file attachments via `/media` upload — so the **Excel export actually
-  arrives as a file**, images/voice/video send natively, and **TTS replies arrive as Opus
-  voice bubbles**.
-- **Quoted replies** (WhatsApp `context.message_id`), WhatsApp-native markdown, a live
-  typing indicator, and a WhatsApp-first UX (no "home channel" nag, final-answer-only —
-  no tool chatter).
-- **Anti-misroute guard**: a reply in a live WhatsApp chat can never leak to another
-  platform (a bug we hit where voice replies double-sent to Telegram).
-
-The 5 small upstream patches wire the adapter into the gateway (platform enum, adapter
-factory, auth maps), teach the `send_message` tool + TTS to treat WhatsApp as media-capable,
-and add the WhatsApp platform hint. Total custom surface: **1 new file + ~140 changed lines**.
+`cashew/mocks/` serves the synthetic dataset as **two APIs that look like the real ones** —
+TrueLayer-shaped open banking (no category leakage, so mapping is a real problem) and
+Xero-shaped accounting (lagged behind the bank feed) — behind a shared **virtual clock** you
+can advance to replay time, plus a **ground-truth oracle** for tests. In production you point
+the same engine at real TrueLayer + Xero.
 
 ---
 
@@ -185,76 +132,52 @@ and add the WhatsApp platform hint. Total custom surface: **1 new file + ~140 ch
 ```bash
 cd cashew
 python3 -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt
-cp .env.example .env                 # defaults are fine
+cp .env.example .env
 ./run.sh &                           # mock harness on :8900
-./cashew outlook                     # you should see a 🟢/🟡/🔴 verdict
+./cashew outlook                     # 🟢/🟡/🔴 verdict
 pytest -q                            # ~150 tests
 ```
 
 > The design-partner dataset is **not** included (see [Security & data](#security--data)).
-> Drop your own CSVs into `cashew/data/<dataset>/<Org>/` — the format is documented in
+> Drop your own CSVs into `cashew/data/<dataset>/<Org>/` — format in
 > [`cashew/data/README.md`](cashew/data/README.md).
 
-### 2. The Hermes finance layer
+### 2. The chat assistant
 
-You need a working [hermes-agent](https://github.com/NousResearch/hermes-agent) checkout
-and a model provider configured (this build used Claude Sonnet via GitHub Copilot).
-
-```bash
-# from a hermes-agent checkout at the pinned base commit
-cd /path/to/hermes-agent
-git checkout $(cat /path/to/this-repo/hermes-finance/UPSTREAM_BASE_COMMIT.txt)
-
-/path/to/this-repo/hermes-finance/apply.sh /path/to/hermes-agent   # adapter + patches
-
-# copy the skill + config, fill in secrets
-cp -r /path/to/this-repo/skills/cashew ~/.hermes/skills/
-#   merge hermes-finance/config.yaml.example into ~/.hermes/config.yaml
-#   fill ~/.hermes/.env from hermes-finance/env.example  (never commit it)
-```
-
-Then run the gateway. Put a public HTTPS tunnel (e.g. `cloudflared`) in front of the
-adapter's local port and point your Meta webhook at `https://<tunnel>/wa/webhook`.
+Install hermes-agent (≥ v0.18), then wire in the finance layer — see
+[`hermes-finance/README.md`](hermes-finance/README.md). In short: copy `skills/cashew` into
+`~/.hermes/skills/`, merge `hermes-finance/config.yaml.example` into your config, and set the
+Telegram + WhatsApp Cloud env vars from `hermes-finance/env.example`. Both platforms are
+native in upstream — no adapter code to install.
 
 ---
 
-## Observability
-
-The gateway traces to **Langfuse** (native Hermes plugin). Each cashflow turn shows up as a
-nested trace — the LLM generations plus each Cashew tool span — so you can see exactly which
-CLI commands ran and what they returned.
-
----
-
-## What's custom vs. upstream
+## What's original vs. upstream
 
 | Piece | Origin |
 |---|---|
-| `cashew/` (engine, mocks, sim, tests, skill) | **100% original** |
-| `hermes-finance/platforms/whatsapp_cloud.py` | **Original** (new Hermes platform) |
-| `hermes-finance/patches/*` | **Original** diffs against upstream files |
-| The gateway, tool framework, model plumbing they patch | [NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent) (MIT) |
+| `cashew/` (engine, mocks, sim, tests) | **100% original** |
+| `skills/cashew/SKILL.md` + config/env glue | **Original** |
+| WhatsApp Cloud + Telegram platforms | [NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent) (MIT) — native |
+| The gateway, tool framework, model plumbing | hermes-agent (MIT) |
 
 ---
 
 ## Security & data
 
-- **No secrets in this repo.** All tokens/keys live in a git-ignored `.env`. `*.example`
-  files are templates only. If you cloned this, rotate any credential you ever pasted
-  anywhere.
-- **The dataset is excluded on purpose.** The original fixtures were synthetic *but derived
-  from real design-partner statements* and marked do-not-share; publishing them would send
-  them to an external service. Only the **format** is documented, so you can supply your own.
-- **Not financial advice.** This is a prototype that surfaces general cashflow information.
-  Anything customer-facing should go through proper compliance review.
+- **No secrets in this repo.** All tokens/keys live in a git-ignored `.env`; `*.example`
+  files are templates. Rotate any credential you ever pasted anywhere.
+- **The dataset is excluded on purpose** — the original fixtures were synthetic *but derived
+  from real design-partner statements* and marked do-not-share. Only the format is documented.
+- **Not financial advice.** A prototype that surfaces general cashflow information; anything
+  customer-facing needs proper compliance review.
 
 ---
 
 ## Credits & license
 
-The `hermes-finance/` integration modifies and redistributes parts of
-[NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent), which is
-MIT-licensed — see [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
-
-The original Cashew engine and the WhatsApp Cloud adapter in this repository are a prototype;
-the copyright holder should choose and add a `LICENSE` before any external distribution.
+WhatsApp Cloud, Telegram, and the gateway come from
+[NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent) (MIT) — see
+[`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md). The original Cashew engine in this
+repository is a prototype; the copyright holder should choose and add a `LICENSE` before any
+external distribution.

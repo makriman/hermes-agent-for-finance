@@ -74,21 +74,24 @@ datasets have been archived out of the project (`~/cashew_archive_nonjam/`).
 
 **Local (venv):**
 ```bash
-./run.sh                       # http://localhost:8900  (docs at /docs)
+./run.sh                       # http://127.0.0.1:8900  (docs at /docs)
 ```
 
 **Docker:**
 ```bash
 mkdir -p state
-docker compose up --build      # serves on :8900, data mounted read-only
+docker compose up --build      # publishes 127.0.0.1:8900 only
 ```
 
-**Point the Cashew engine at it** — set the connector base URLs; swap toward real
-TrueLayer/Xero in prod (connector shapes match; real auth/pagination/error
-handling still needed):
+The mock has no auth. `./run.sh` binds `127.0.0.1` (`CASHEW_BIND_HOST` overrides it). Compose publishes that port on the host loopback. The container process still listens on `0.0.0.0` so the published port can reach it.
+
+**Point the Cashew engine at it** — the client reads one base URL,
+`CASHEW_MOCK_BASE` (default `http://127.0.0.1:8900`), and calls the
+open-banking, Xero, and sim paths under it. Swap that host for real
+TrueLayer/Xero in prod (connector shapes match; real auth, pagination, and
+error handling are still required):
 ```
-OPENBANKING_BASE_URL=http://localhost:8900/openbanking/data/v1
-XERO_BASE_URL=http://localhost:8900/xero/api.xro/2.0
+CASHEW_MOCK_BASE=http://127.0.0.1:8900
 ```
 
 ---
@@ -99,10 +102,10 @@ Every read is filtered to `date <= sim_now`; balances are reported as-of the
 clock. Advance the clock and tomorrow's actuals appear.
 
 ```bash
-curl -s localhost:8900/sim/now
-curl -s -XPOST localhost:8900/sim/reset                       # -> anchor (2026-06-30)
-curl -s -XPOST localhost:8900/sim/advance -d '{"days":1}' -H 'content-type: application/json'
-curl -s -XPOST localhost:8900/sim/org     -d '{"slug":"jam-scn-2"}' -H 'content-type: application/json'
+curl -s 127.0.0.1:8900/sim/now
+curl -s -XPOST 127.0.0.1:8900/sim/reset                       # -> anchor (2026-06-30)
+curl -s -XPOST 127.0.0.1:8900/sim/advance -d '{"days":1}' -H 'content-type: application/json'
+curl -s -XPOST 127.0.0.1:8900/sim/org     -d '{"slug":"jam-scn-2"}' -H 'content-type: application/json'
 ```
 
 ## Endpoints

@@ -1,6 +1,9 @@
 # --- secrets: never commit ---
 .env
+.env.*
+.envrc
 *.env
+!.env.example
 !*.env.example
 !env.example
 bridge/.env

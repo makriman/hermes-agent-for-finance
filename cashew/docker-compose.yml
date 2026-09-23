@@ -14,5 +14,6 @@ services:
       - ./data:/app/data:ro          # private test data, read-only
       - ./state:/app/state           # persisted virtual clock
     ports:
-      - "8900:8900"
+      # Unauthenticated mock (bank data and /sim mutations). Host loopback only.
+      - "127.0.0.1:8900:8900"
     restart: unless-stopped

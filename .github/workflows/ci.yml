@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  hardening:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install and audit dependencies
+        working-directory: cashew
+        run: |
+          python -m pip install -U pip
+          pip install -r requirements.txt pip-audit
+          pip-audit -r requirements.txt --progress-spinner off
+
+      - name: Compile and import
+        working-directory: cashew
+        run: |
+          python -m compileall -q mocks engine sim
+          python -c "import mocks.app, engine.export, engine.xlsx_import"
+
+      - name: Bind defaults, env ignores, and pins
+        run: bash .github/scripts/check-hardening.sh

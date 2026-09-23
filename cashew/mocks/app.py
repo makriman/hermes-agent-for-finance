@@ -5,8 +5,8 @@ Three routers under one service (cleanly separable later):
   /xero/api.xro/2.0      — Xero-shaped Accounting API
   /sim                   — virtual-clock control + ground-truth oracle
 
-Run:  uvicorn mocks.app:app --host 0.0.0.0 --port 8900
-Docs: http://localhost:8900/docs
+Run:  ./run.sh   # 127.0.0.1:8900; the API has no auth
+Docs: http://127.0.0.1:8900/docs
 """
 from __future__ import annotations
 

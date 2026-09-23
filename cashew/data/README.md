@@ -17,8 +17,10 @@ data/
         └── <Org Name> Xero.csv
 ```
 
-The active org is chosen by slug (e.g. `myco-scn-1`) via `CASHEW_ORG` in `.env` or
-`GET /sim/orgs`. Org slugs are derived from the folder names.
+The active org is chosen by slug (for example `jam-scn-1`) via `CASHEW_ORG` in `.env`
+or `POST /sim/org`. Slugs are the keys in `mocks/orgs.py`; each entry's `folder`
+must exist under the data root (`CASHEW_DATA_ROOT`, default `data/ailabgemini`).
+`GET /sim/orgs` only lists them.
 
 ## CSV formats
 

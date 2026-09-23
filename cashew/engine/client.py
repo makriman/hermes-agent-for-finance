@@ -8,7 +8,7 @@ import os
 
 import requests
 
-DEFAULT_BASE = os.getenv("CASHEW_MOCK_BASE", "http://localhost:8900")
+DEFAULT_BASE = os.getenv("CASHEW_MOCK_BASE", "http://127.0.0.1:8900")
 
 
 class Clients:

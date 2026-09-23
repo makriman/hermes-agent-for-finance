@@ -99,7 +99,7 @@ line-item config** recomputed on the fly, never a black box.
 
 ```bash
 cd cashew
-./run.sh &                       # start the mock harness on :8900
+./run.sh &                       # mock harness on 127.0.0.1:8900 (no auth)
 ./cashew outlook                 # 🟢/🟡/🔴 + 3-month weekly cash view
 ./cashew vat                     # accrual-aware VAT position, real UK due dates
 ./cashew reconcile               # plan vs actuals, with the cause of every miss
@@ -133,7 +133,7 @@ the same engine at real TrueLayer + Xero.
 cd cashew
 python3 -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt
 cp .env.example .env
-./run.sh &                           # mock harness on :8900
+./run.sh &                           # mock harness on 127.0.0.1:8900 (no auth)
 ./cashew outlook                     # 🟢/🟡/🔴 verdict
 pytest -q                            # ~150 tests
 ```
@@ -165,8 +165,11 @@ native in upstream — no adapter code to install.
 
 ## Security & data
 
-- **No secrets in this repo.** All tokens/keys live in a git-ignored `.env`; `*.example`
-  files are templates. Rotate any credential you ever pasted anywhere.
+- **No secrets in this repo.** Tokens and keys belong in a git-ignored `.env`
+  (also `.env.local`, `.env.production`, and `.envrc`). `*.example` files are
+  templates. Rotate any credential you ever pasted anywhere.
+- **The mock API has no auth.** `./run.sh` binds `127.0.0.1`. Compose publishes
+  `127.0.0.1:8900` only.
 - **The dataset is excluded on purpose** — the original fixtures were synthetic *but derived
   from real design-partner statements* and marked do-not-share. Only the format is documented.
 - **Not financial advice.** A prototype that surfaces general cashflow information; anything

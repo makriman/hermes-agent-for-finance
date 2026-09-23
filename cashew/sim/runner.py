@@ -14,8 +14,8 @@ Cadence (matches the product spec):
   • month-end post-mortem + oracle PASS/FAIL
 
 Usage:
-  python -m sim.runner                       # default org, http://localhost:8900
-  python -m sim.runner --org jam-scn-1 --base http://localhost:8900
+  python -m sim.runner                       # default org, http://127.0.0.1:8900
+  python -m sim.runner --org jam-scn-1 --base http://127.0.0.1:8900
 """
 from __future__ import annotations
 
@@ -26,7 +26,7 @@ from datetime import date, timedelta
 
 import requests
 
-BASE = "http://localhost:8900"
+BASE = "http://127.0.0.1:8900"
 
 
 def _get(path, **params):

@@ -17,6 +17,8 @@ ENV CASHEW_DATA_ROOT=/app/data/ailabgemini \
 EXPOSE 8900
 
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
-    CMD python -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8900/health',timeout=3).status==200 else 1)"
+    CMD python -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8900/health',timeout=3).status==200 else 1)"
 
+# All container interfaces, so Compose can publish the port. The host
+# mapping is loopback-only (docker-compose.yml). This process has no auth.
 CMD ["uvicorn", "mocks.app:app", "--host", "0.0.0.0", "--port", "8900"]

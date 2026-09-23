@@ -6,4 +6,7 @@ state/
 *.log
 .git/
 .env
+.env.*
+.envrc
+!.env.example
 engine.db

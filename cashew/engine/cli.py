@@ -767,9 +767,10 @@ def cmd_export(c, store, args):
     r = _live(c, store, org, cfg, args)
     from .export import export_xlsx
     enriched, _, _, _ = build_enriched(c, cfg["now"], store.rules(org))
-    out = args.out or f"/home/hermes/cashew/exports/{org}-forecast.xlsx"
-    import os
-    os.makedirs(os.path.dirname(out), exist_ok=True)
+    from pathlib import Path
+    out = args.out or str(
+        Path(__file__).resolve().parent.parent / "exports" / f"{org}-forecast.xlsx")
+    Path(out).parent.mkdir(parents=True, exist_ok=True)
     export_xlsx(out, r, store.items(org), enriched)
     print(f"MEDIA:{out}")
     print(f"Exported forecast to {out} (Forecast / LineItems / Actuals sheets).")

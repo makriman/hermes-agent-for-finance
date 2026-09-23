@@ -5,4 +5,5 @@ cd "$(dirname "$0")"
 [ -d .venv ] || python3 -m venv .venv
 . .venv/bin/activate
 pip install -q -r requirements.txt
-exec uvicorn mocks.app:app --host 0.0.0.0 --port 8900 "$@"
+# No auth on this harness. Bind the loopback interface only.
+exec uvicorn mocks.app:app --host 127.0.0.1 --port 8900 "$@"

@@ -38,16 +38,24 @@ def _read() -> dict:
 
 
 def _write(st: dict) -> None:
+    """Atomically replace the state file under an exclusive lock.
+
+    The lock has to live on a stable sibling file. Locking the temp file does
+    not serialize writers: ``open(..., "w")`` truncates before ``flock``, and
+    two processes can open different inodes.
+    """
     p: Path = config.STATE_FILE
     p.parent.mkdir(parents=True, exist_ok=True)
-    tmp = p.with_suffix(".tmp")
-    with open(tmp, "w") as f:
+    lock_path = p.with_name(p.name + ".lock")
+    with open(lock_path, "a+") as lockf:
         if fcntl:
-            fcntl.flock(f.fileno(), fcntl.LOCK_EX)
-        json.dump(st, f)
-        f.flush()
-        os.fsync(f.fileno())
-    tmp.replace(p)
+            fcntl.flock(lockf.fileno(), fcntl.LOCK_EX)
+        tmp = p.with_name(p.name + ".tmp")
+        with open(tmp, "w") as f:
+            json.dump(st, f)
+            f.flush()
+            os.fsync(f.fileno())
+        tmp.replace(p)
 
 
 def get_org() -> str:

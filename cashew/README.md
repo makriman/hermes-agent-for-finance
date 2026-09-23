@@ -83,12 +83,13 @@ mkdir -p state
 docker compose up --build      # serves on :8900, data mounted read-only
 ```
 
-**Point the Cashew engine at it** — set the connector base URLs; swap toward real
-TrueLayer/Xero in prod (connector shapes match; real auth/pagination/error
-handling still needed):
+**Point the Cashew engine at it** — the client reads one base URL,
+`CASHEW_MOCK_BASE` (default `http://localhost:8900`), and calls the
+open-banking, Xero, and sim paths under it. Swap that host for real
+TrueLayer/Xero in prod (connector shapes match; real auth, pagination, and
+error handling are still required):
 ```
-OPENBANKING_BASE_URL=http://localhost:8900/openbanking/data/v1
-XERO_BASE_URL=http://localhost:8900/xero/api.xro/2.0
+CASHEW_MOCK_BASE=http://localhost:8900
 ```
 
 ---

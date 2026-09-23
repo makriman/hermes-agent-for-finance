@@ -2,12 +2,10 @@
 
 ## NousResearch/hermes-agent
 
-The files under `hermes-finance/` (the `whatsapp_cloud.py` platform and the patches under
-`hermes-finance/patches/`) are original work that extends and modifies
-[NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent). The patches are
-diffs intended to be applied on top of an upstream checkout (see
-`hermes-finance/UPSTREAM_BASE_COMMIT.txt`); this repository does not redistribute the
-upstream source itself.
+This repository does not redistribute [NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent)
+source. `hermes-finance/` is configuration only (env template, config snippet, and the
+upstream commit pin in `UPSTREAM_BASE_COMMIT.txt`). WhatsApp Cloud and Telegram come from
+the upstream gateway; an earlier in-tree adapter and its patches were removed.
 
 hermes-agent is distributed under the MIT License, reproduced below.
 

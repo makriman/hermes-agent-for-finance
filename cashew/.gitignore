@@ -5,4 +5,6 @@ state/
 .sim_state.json
 *.log
 .env
+.env.*
+!.env.example
 bridge/.env

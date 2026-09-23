@@ -1,6 +1,8 @@
 # --- secrets: never commit ---
 .env
+.env.*
 *.env
+!.env.example
 !*.env.example
 !env.example
 bridge/.env
@@ -24,6 +26,7 @@ engine.db
 engine.db*.bak
 state/
 .sim_state.json
+.sim_state.json.*
 exports/*
 !exports/.gitkeep
 *.log
